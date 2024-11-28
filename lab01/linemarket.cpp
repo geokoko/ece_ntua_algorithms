@@ -50,13 +50,13 @@ int main () {
 	ll high = intervals.back().f - intervals.front().s; //maximum possible distance
 	ll optimal = INT_MIN;
 
-	while (low <= high) {
+	while (low < high) {
 		ll mid = (low + high) / 2;
 		if (isvalid(intervals, N, mid)) {
 			optimal = mid;
 			low = mid + 1;
 		} else {
-			high = mid - 1;
+			high = mid;
 		}
 	}
 
