@@ -5,21 +5,22 @@
 #include <iostream>  
 #include <cmath>  
   
-#define ll long long  
+#define ll long long
+#define EPS 1e-8
   
 struct Edge {  
     ll u, v, p, w;  
-    ll cost;  
+    double cost;  
   
-    Edge(ll u, ll v, ll p, ll w, ll cost) : u(u), v(v), p(p), w(w), cost(cost) {}  
+    Edge(ll u, ll v, ll p, ll w) : u(u), v(v), p(p), w(w), cost(0.0) {}  
   
     bool operator < (const Edge& e) const {  
-        return cost > e.cost;  
+        return cost - e.cost > EPS;  
     }  
 };  
   
 /* 
- * Union-Find Disjoll Set 
+ * Union-Find Disjoint Set 
  * make_set(n): create n sets 
  * find(u): find the set that contains u 
  * unite(u, v): unite the sets that contain u and v 
@@ -61,11 +62,11 @@ bool unite(ll u, ll v) {
  * and return the sum of weights and profits 
  */  
   
-bool isPossible (ll R, std::vector<Edge>& edges, ll N, ll &sum_w, ll &sum_p) {  
+bool isPossible (double R, std::vector<Edge>& edges, ll N, ll &sum_w, ll &sum_p, double &total_c) {  
     std::sort(edges.begin(), edges.end());  
   
     make_set(N);  
-    ll total_c = 0;  
+    total_c = 0.0;  
     ll edges_used = 0;  
     ll temp_sum_w = 0, temp_sum_p = 0;  
   
@@ -85,7 +86,7 @@ bool isPossible (ll R, std::vector<Edge>& edges, ll N, ll &sum_w, ll &sum_p) {
         return false;  
     }  
   
-    if (total_c >= 0) {  
+    if (total_c >= -EPS) {  
         sum_w = temp_sum_w;  
         sum_p = temp_sum_p;  
         return true;  
@@ -105,25 +106,29 @@ int main() {
     for (ll i = 0; i < M; i++) {  
         ll u, v, p, w;  
         scanf("%lld %lld %lld %lld", &u, &v, &p, &w);  
-        edges.emplace_back(Edge{u - 1, v - 1, p, w, 0});  
+        edges.emplace_back(Edge{u - 1, v - 1, p, w});  
     }  
   
-    ll low = 1;  
-    ll high = std::pow(N, 2) * 200;  
-    ll s_p = 1, s_w = 1;  
+	double low = 0.0;  
+    double high = 1e9;  
+    ll s_p = 0, s_w = 0;  
   
-    while (low <= high) {  
-        ll mid = (low + high) / 2;  
+    while (high - low > EPS) {  
+        double mid = (low + high) / 2.0;
+		double total_c = 0.0;
+		ll temp_s_p = 0, temp_s_w = 0;
   
         for (auto& edge : edges) {  
             edge.cost = edge.p - mid * edge.w;  
         }  
   
-        if (isPossible(mid, edges, N, s_p, s_w)) {  
-            low = mid + 1;  
+        if (isPossible(mid, edges, N, temp_s_p, temp_s_w, total_c)) {  
+            s_p = temp_s_p;
+        	s_w = temp_s_w;
+			low = mid;  
         }  
         else {  
-            high = mid - 1;  
+            high = mid;  
         }  
     }  
   
