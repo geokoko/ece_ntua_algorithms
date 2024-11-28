@@ -112,7 +112,7 @@ int main() {
 	ll high = std::pow(N, 2) * 200;
 	ll s_p = 1, s_w = 1;
 
-	while (low < high) {
+	while (low <= high) {
 		ll mid = (low + high) / 2;
 
 		for (auto& edge : edges) {
@@ -123,7 +123,7 @@ int main() {
 			low = mid + 1;
 		}
 		else {
-			high = mid;
+			high = mid - 1;
 		}
 	}
 

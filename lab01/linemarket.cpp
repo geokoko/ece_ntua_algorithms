@@ -39,9 +39,7 @@ int main () {
 	std::vector<Interval> intervals(M);
 
 	for (ll i = 0; i < M; ++i) {
-		Interval interval;
-		scanf("%lld %lld", &interval.s, &interval.f);
-		intervals.push_back(interval);
+		scanf("%lld %lld", &intervals[i].s, &intervals[i].f);
 	}
 
 	std::sort(intervals.begin(), intervals.end()); // sort by start time, in ascending order
@@ -50,18 +48,18 @@ int main () {
 	ll high = intervals.back().f - intervals.front().s; //maximum possible distance
 	ll optimal = INT_MIN;
 
-	while (low < high) {
+	while (low <= high) {
 		ll mid = (low + high) / 2;
 		if (isvalid(intervals, N, mid)) {
 			optimal = mid;
 			low = mid + 1;
 		} else {
-			high = mid;
+			high = mid - 1;
 		}
 	}
 
 	if (optimal == INT_MIN)
-		return -1;
+		return 0;
 
 	printf("%lld\n", optimal);
 	return 0;
