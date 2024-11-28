@@ -46,7 +46,7 @@ int main () {
 
 	std::sort(intervals.begin(), intervals.end()); // sort by start time, in ascending order
 
-	ll low = 1; // minimum possible distance
+	ll low = 0; // minimum possible distance
 	ll high = intervals.back().f - intervals.front().s; //maximum possible distance
 	ll optimal = INT_MIN;
 
