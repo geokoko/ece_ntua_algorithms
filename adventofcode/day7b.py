@@ -31,7 +31,7 @@ def is_solvable(target, numbers):
     operator_slots = len(numbers) - 1
     for operators in product(['+', '*', '||'], repeat=operator_slots):
         if evaluate_expression(numbers, operators) == target:
-            return True
+            return True 
     return False
 
 def calculate_total_calibration(input_data):
