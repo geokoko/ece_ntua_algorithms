@@ -4,93 +4,117 @@
 #include <limits>
 #include <queue>
 #include <iostream>
+#include <cstring>
 
 #define ll long long
+#define INF 1000000000000LL
 
-const ll INF = 1000000000000000000LL;
+static ll dp[1100][1100]; // tracking the (node, k) state shortest_paths here. 
 
+/*  int_node   = current node
+ *  k          = edges skipped so far
+ *  path_length= the total distance traveled so far
+ */
 struct State {
-	ll int_node;	/* current node */
-	ll k;			/* how many edges have we skipped with superspeed */
-	ll path_length;	/* path length */
+	ll int_node;
+	ll k;
+	ll path_length;
+};
 
-	bool operator > (const State& other) const {
-		return path_length > other.path_length;
-	}	
+/* Custom comparator for the priority queue:
+ * Sort by smaller k and then 
+ * prioritize smaller path length
+ */
+
+struct CompareState {
+	inline bool operator()(const State &a, const State &b) const {
+		if (a.k != b.k) {
+			return a.k > b.k;  // prioritize smaller k
+		}
+		return a.path_length > b.path_length;  // then prioritize smaller path_length
+	}
 };
 
 int main () {
-	std::ios::sync_with_stdio(false);
-	std::cin.tie(nullptr);
+	int N, M, s, t;
+	ll B;
+	scanf("%d %d %d %d %lld", &N, &M, &s, &t, &B);
 
-	ll N, M, s, t, B;
-	scanf("%lld %lld %lld %lld %lld", &N, &M, &s, &t, &B);
+	std::vector<std::vector<std::pair<ll, ll>>> G(N + 1);
+	G.reserve(N + 1);
 
-	std::vector<std::vector<std::pair<ll, ll>>> G(N + 1); /* adjacency list */
 	for (int i = 0; i < M; ++i) {
-		ll u, v, L;
-		scanf("%lld %lld %lld", &u, &v, &L);
-
+		int u, v;
+		ll L;
+		scanf("%d %d %lld", &u, &v, &L);
 		G[u].push_back({v, L});
 	}
-	/* Maximum number of skips is K */
-	ll maxK = std::min(M, N - 1);
-	std::vector<std::vector<ll>> dp(N + 1, std::vector<ll> (maxK + 1, INF));
-	dp[s][0] = 0;
 
-	/* Running modified Dijkstra
-	 * Decision problem:
-	 * 	1. Travel normally (don't skip candidate edge)
-	 * 	2. Skip candidate edge (increment k)
-	 */
-	std::priority_queue<State, std::vector<State>, std::greater<State>> pq; // sort priority queue in ascending order 
-	State initial_state = {s, 0, 0};
-	pq.push(initial_state);
+	int maxK = std::min(M, N - 1);
+	memset(dp, 0x3f, sizeof(dp));
+	dp[s][0] = 0LL;
+
+	/* pop the state with the fewest skips, then smallest path_length first. */
+	std::priority_queue<State, std::vector<State>, CompareState> pq;
+	pq.push({(ll)s, 0LL, 0LL});
+
+	bool found = false;
 
 	while (!pq.empty()) {
 		State st = pq.top();
 		pq.pop();
-		ll superspeeds_used = st.k;
 
-		/* Find neighbors of current node */
-		for (auto &edge : G[st.int_node]) {
-			ll next = edge.first; /* neighbor */
+		ll node      = st.int_node;
+		ll usedSkips = st.k;
+		ll dist      = st.path_length;
+
+		/* Skip if this state is outdated */
+		if (dist > dp[node][usedSkips]) {
+			continue;
+		}
+
+		/* If we've reached t with dist <= B, we have the minimum skips, as we prioritize the smaller k. When we encounter a valid solution, we know that k is
+		 * minimal.
+		 */
+		if (node == t && dist <= B) {
+			printf("%lld\n", usedSkips);
+			found = true;
+			break;
+		}
+
+		/* If we already exceed the budget B, no need to explore further */
+		if (dist > B) {
+			continue;
+		}
+
+		/* Explore neighbors of the current node */
+		for (auto &edge : G[node]) {
+			ll nxt  = edge.first;
 			ll cost = edge.second;
 
-			/* First option: don't skip edge */
-			if (st.path_length + cost < dp[next][superspeeds_used]) {
-				dp[next][superspeeds_used] = st.path_length + cost;
-				pq.push({next, superspeeds_used, dp[next][superspeeds_used]});
+			/* Option 1: Travel normally (no skip) */
+			ll ndist = dist + cost;
+			if (ndist < dp[nxt][usedSkips]) {
+				dp[nxt][usedSkips] = ndist;
+				pq.push({nxt, usedSkips, ndist});
 			}
-			/* Second option: skip edge. Don't add cost to reach the neighbor */
-			if (superspeeds_used < maxK && st.path_length < dp[next][superspeeds_used + 1]) {
-				dp[next][superspeeds_used + 1] = st.path_length;
-				pq.push({next, superspeeds_used + 1, dp[next][superspeeds_used + 1]});
+
+			/* Option 2: Skip this edge */
+			if (usedSkips < maxK) {
+				ll ndistSkip = dist;  // cost = 0
+				ll newK = usedSkips + 1;
+				if (ndistSkip < dp[nxt][newK]) {
+					dp[nxt][newK] = ndistSkip;
+					pq.push({nxt, newK, ndistSkip});
+				}
 			}
 		}
 	}
 
-	ll ans = -1;
-	ll high = maxK;
-	ll low = 0;
-
-	while (low <= high) {
-		ll mid = (low + high) / 2;
-		if (dp[t][mid] <= B || dp[t][mid] >= INF) {
-			ans = mid;
-			high = mid - 1;
-		}
-		else {
-			low = mid + 1;
-		}
-	}
-
-	if (ans == -1) {
+	if (!found) {
 		printf("IMPOSSIBLE\n");
-		return 0;
 	}
-
-	printf("%lld\n", ans);
 
 	return 0;
 }
+
